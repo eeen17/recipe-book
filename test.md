@@ -4,7 +4,7 @@
 - 1/4 onion
 - 2 stalks of green onions
 - 1/2 cup short grain rice
-## Sauce
+## Sauce()
 - 9 mL soy sauce
 - 9 mL mirin
 - 9 mL water
