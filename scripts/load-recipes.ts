@@ -4,6 +4,7 @@ import * as path from "jsr:@std/path";
 import { type ParsedPath } from "jsr:@std/path/parse";
 import { type WalkEntry } from "jsr:@std/fs";
 import { toKebabCase } from "jsr:@std/text/to-kebab-case";
+import { dirname } from "node:path";
 
 const HTML_DIR = "content/pages";
 const MD_DIR = "content/recipe-content";
@@ -67,6 +68,49 @@ async function handleEntry(dirEntry: WalkEntry) {
         tocLevel[fileEntry.name] = {}
 }
 
-for await (const dirEntry of walk(MD_DIR)) handleEntry(dirEntry);
+async function writeTOCHTML() {
+    console.log("walking tree...")
 
-console.log(tocTree)
+
+    const dirHTML = (dirName: string, subContent: string, firstLevel: boolean) => {
+        return `
+        ${firstLevel ? "" : "<li>"}
+        <details open>
+            <summary>${dirName}</summary>
+            <ul>
+                ${subContent}
+            </ul>
+        </details>
+        ${firstLevel ? "" : "</li>"}
+    `.trim();
+    }
+
+    const fileHTML = (name: string, path: string) => {
+        return `
+        <li>${name}: ${path}</li>
+    `.trim();
+    }
+
+    function walkTree(curLevel: FileTree | string, firstLevel = false): string {
+        const nextLevelEntries = Object.entries(curLevel);
+        if (nextLevelEntries.length === 0) return "";
+
+        return nextLevelEntries.map(
+            ([name, nextLevel]) => {
+                if (typeof (nextLevel) === "string")
+                    return fileHTML(name, nextLevel);
+                return dirHTML(
+                    name,
+                    walkTree(nextLevel),
+                    firstLevel
+                )
+            }
+        ).join("\n")
+    }
+
+    const tocHTML = walkTree(tocTree, true);
+    await Deno.writeTextFile("content/toc.html", tocHTML);
+}
+
+for await (const dirEntry of walk(MD_DIR)) handleEntry(dirEntry);
+await writeTOCHTML();
