@@ -4,12 +4,11 @@ import * as path from "jsr:@std/path";
 import { type ParsedPath } from "jsr:@std/path/parse";
 import { type WalkEntry } from "jsr:@std/fs";
 import { toKebabCase } from "jsr:@std/text/to-kebab-case";
-import { dirname } from "node:path";
 
+const TEMPLATE = await Deno.readTextFile("template.html")
 const HTML_DIR = "content/pages";
 const MD_DIR = "content/recipe-content";
 
-path.parse
 type FileEntry = {
     relativeParsePath: ParsedPath
 } & WalkEntry
@@ -32,10 +31,12 @@ async function createHTMLFile(fileEntry: FileEntry) {
     return htmlFilePath;
 }
 
+// TODO: move process file after TOC is generated so we can put into template
 async function processMDFile(fileEntry: FileEntry) {
     const htmlFilePath = await createHTMLFile(fileEntry);
-    const md = await Deno.readTextFile(fileEntry.path);
-    await Deno.writeTextFile(htmlFilePath, await marked.parse(md));
+    const md = await marked.parse(await Deno.readTextFile(fileEntry.path));
+    const html = TEMPLATE.replace("{{right page}}", md)
+    await Deno.writeTextFile(htmlFilePath, html);
     return htmlFilePath;
 }
 
@@ -61,8 +62,8 @@ async function handleEntry(dirEntry: WalkEntry) {
     const tocLevel = getTOCObjectFromPath(relativePath);  // only directories to entry
 
     if (dirEntry.isFile) {
-        const htmlFilePath = await processMDFile(fileEntry);
-        tocLevel[fileEntry.relativeParsePath.name] = htmlFilePath;
+        const htmlRelPath = path.relative(HTML_DIR, await processMDFile(fileEntry));
+        tocLevel[fileEntry.relativeParsePath.name] = htmlRelPath;
 
     } else if (fileEntry.isDirectory)
         tocLevel[fileEntry.name] = {}
@@ -87,7 +88,7 @@ async function writeTOCHTML() {
 
     const fileHTML = (name: string, path: string) => {
         return `
-        <li>${name}: ${path}</li>
+        <li><a href="${path}">${name}</a></li>
     `.trim();
     }
 
@@ -108,8 +109,12 @@ async function writeTOCHTML() {
         ).join("\n")
     }
 
-    const tocHTML = walkTree(tocTree, true);
-    await Deno.writeTextFile("content/toc.html", tocHTML);
+    const tocHTML = `
+    <div class=table-of-contents>
+        ${walkTree(tocTree, true)}
+    </div>`;
+
+    await Deno.writeTextFile("content/pages/index.html", TEMPLATE.replace("{{left page}}", tocHTML));
 }
 
 for await (const dirEntry of walk(MD_DIR)) handleEntry(dirEntry);

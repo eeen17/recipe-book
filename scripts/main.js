@@ -1,1 +1,0 @@
-const toc = document.querySelector();

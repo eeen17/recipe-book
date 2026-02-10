@@ -48,24 +48,7 @@ summary {
 	font-size: xx-large
 }
 
-/* 1. Hide the default arrow */
-
 
 li {
 	list-style: none;
 }
-
-/* summary::-webkit-details-marker { display: none; } */
-
-/* 2. Add custom icon */
-/* summary::before { */
-  /* content: url('custom-arrow.svg'); */
-  /* display: inline-block;
-  margin-right: 10px;
-  transition: transform 0.2s;
-} */
-
-/* 3. Rotate it when open */
-/* details[open] summary::before {
-  transform: rotate(90deg);
-} */
