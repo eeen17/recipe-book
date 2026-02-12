@@ -13,8 +13,8 @@ type FileEntry = {
     relativeParsePath: ParsedPath;
 } & WalkEntry;
 function isFileEntry(obj: any): obj is FileEntry {
-    return typeof obj === 'object' && obj !== null &&
-         'relativeParsePathd' in obj
+    return typeof obj === "object" && obj !== null &&
+        "relativeParsePath" in obj;
 }
 
 type FileTree = {
@@ -50,21 +50,19 @@ function handleEntry(dirEntry: WalkEntry) {
     }
 }
 
-async function createHTMLFile(fileEntry: FileEntry) {
+function getHTMLFilePath(fileEntry: FileEntry, websiteAbsolute = false) {
     const dirsTo = fileEntry.relativeParsePath.dir;
     const fileName = `${toKebabCase(fileEntry.relativeParsePath.name)}.html`;
 
-    const htmlFilePath = path.join(
-        HTML_DIR,
+    return path.join(
+        (websiteAbsolute ? path.SEPARATOR : "") + HTML_DIR,
         dirsTo,
         fileName,
     );
-    await ensureFile(htmlFilePath);
-    return htmlFilePath;
 }
 
-async function writeHTML(): Promise<[[FileEntry, string][], string]> {
-    const files: [FileEntry, string][] = [];
+async function writeHTML(): Promise<[FileEntry[], string]> {
+    const files: FileEntry[] = [];
     const dirHTML = (
         dirName: string,
         subContent: string,
@@ -82,23 +80,61 @@ async function writeHTML(): Promise<[[FileEntry, string][], string]> {
     `.trim();
     };
 
-    const fileHTML = async (fileEntry: FileEntry) => {
-        const htmlFilePath = await createHTMLFile(fileEntry);
-        files.push([fileEntry, htmlFilePath]);
+    const fileHTML = (fileEntry: FileEntry) => {
+        files.push(fileEntry);
         return `
-        <li><a href="${htmlFilePath}">${fileEntry.relativeParsePath.name}</a></li>
-    `.trim();
+        <li>
+            <a href="${getHTMLFilePath(fileEntry, true)}">
+                ${fileEntry.relativeParsePath.name}
+            </a>
+        </li>`.trim();
     };
 
     // TODO: fix infinite walk
-    function walkTree(curLevel: FileTree | FileEntry, firstLevel = false): string {
+    function walkTree(
+        curLevel: FileTree,
+        firstLevel = false,
+    ): string {
+        // async function foo(
+        //     count: number,
+        //     cl: FileTree,
+        //     fl = false,
+        // ): string {
+        //     if (count == 5) return;
+
+        //     const nextLevelEntries = Object.entries(cl);
+        //     if (nextLevelEntries.length === 0) return "";
+
+        //     console.log("================")
+        //     console.log(count)
+
+        //     return (await Promise.all(nextLevelEntries.map(
+        //         async ([name, nextLevel]) => {
+        //             if (isFileEntry(nextLevel)) {
+        //                 console.log("file entry! leaving.")
+        //                 return await fileHTML(nextLevel);
+        //             }
+        //             console.log("not file entry!")
+        //             console.log(Object.keys(nextLevel))
+        //             console.log()
+        //             return dirHTML(
+        //                 name,
+        //                 foo(count + 1, nextLevel),
+        //                 // walkTree(nextLevel),
+        //                 fl,
+        //             );
+        //         },
+        //     ))).join("\n");
+        // }
+        // foo(0, curLevel, firstLevel);
+
         const nextLevelEntries = Object.entries(curLevel);
         if (nextLevelEntries.length === 0) return "";
 
-        return nextLevelEntries.map(
-            async ([name, nextLevel]) => {
+        return (nextLevelEntries.map(
+            ([name, nextLevel]) => {
                 if (isFileEntry(nextLevel)) {
-                    return await fileHTML(nextLevel);
+                    return fileHTML(nextLevel);
                 }
                 return dirHTML(
                     name,
@@ -106,7 +142,7 @@ async function writeHTML(): Promise<[[FileEntry, string][], string]> {
                     firstLevel,
                 );
             },
-        ).join("\n");
+        )).join("\n");
     }
 
     const tocHTML = `
@@ -120,23 +156,22 @@ async function writeHTML(): Promise<[[FileEntry, string][], string]> {
             .replace("{{left page}}", tocHTML)
             .replace("{{right page}}", "<h1>Recipe Book</h1>"),
     );
-    return [files, tocHTML]
+    return [files, tocHTML];
 }
 
-async function processMDFile(fileEntry: FileEntry, htmlPath: string, tocHTML: string) {
-    // const htmlFilePath = await createHTMLFile(fileEntry);
-    // fileEntry.relativeParsePath.dir
-    // const htmlPath = path.join(
-    //     HTML_DIR,
-    //     htmlPath
-    // );
+async function processMDFile(
+    fileEntry: FileEntry,
+    tocHTML: string,
+) {
+    const htmlPath = getHTMLFilePath(fileEntry);
+    await ensureFile(htmlPath); // create file
     const md = await marked.parse(await Deno.readTextFile(fileEntry.path));
-    const html = TEMPLATE.replace("{{right page}}", md);
+    const html = TEMPLATE
+        .replace("{{right page}}", md)
+        .replace("{{left page}}", tocHTML);
     await Deno.writeTextFile(htmlPath, html);
-    // return htmlPath;
 }
 
 for await (const dirEntry of walk(MD_DIR)) handleEntry(dirEntry);
-console.log(tocTree)
-const [files, tocHTML] = (await writeHTML())
-files.forEach(([fileEntry, htmlPath]) => processMDFile(fileEntry, htmlPath, tocHTML));
+const [files, tocHTML] = await writeHTML();
+files.forEach((fileEntry) => processMDFile(fileEntry, tocHTML));
