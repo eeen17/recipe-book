@@ -16,6 +16,7 @@ jobs:
         with: 
           repository: 'eeen17/recipe-content'
           path: './content/recipe-content'
+          ssh-key: ${{ secrets.RECIPE_CONTENT_SSH_KEY }}
       - uses: denoland/setup-deno@v2
       - run: deno run -A load-recipes.ts
       - uses: actions/upload-pages-artifact@v3
