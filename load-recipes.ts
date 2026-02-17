@@ -95,39 +95,6 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
         curLevel: FileTree,
         firstLevel = false,
     ): string {
-        // async function foo(
-        //     count: number,
-        //     cl: FileTree,
-        //     fl = false,
-        // ): string {
-        //     if (count == 5) return;
-
-        //     const nextLevelEntries = Object.entries(cl);
-        //     if (nextLevelEntries.length === 0) return "";
-
-        //     console.log("================")
-        //     console.log(count)
-
-        //     return (await Promise.all(nextLevelEntries.map(
-        //         async ([name, nextLevel]) => {
-        //             if (isFileEntry(nextLevel)) {
-        //                 console.log("file entry! leaving.")
-        //                 return await fileHTML(nextLevel);
-        //             }
-        //             console.log("not file entry!")
-        //             console.log(Object.keys(nextLevel))
-        //             console.log()
-        //             return dirHTML(
-        //                 name,
-        //                 foo(count + 1, nextLevel),
-        //                 // walkTree(nextLevel),
-        //                 fl,
-        //             );
-        //         },
-        //     ))).join("\n");
-        // }
-        // foo(0, curLevel, firstLevel);
-
         const nextLevelEntries = Object.entries(curLevel);
         if (nextLevelEntries.length === 0) return "";
 
@@ -136,6 +103,7 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
                 if (isFileEntry(nextLevel)) {
                     return fileHTML(nextLevel);
                 }
+                else if (name == ".obsidian") return ""
                 return dirHTML(
                     name,
                     walkTree(nextLevel),
@@ -150,8 +118,10 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
         ${walkTree(tocTree, true)}
     </div>`;
 
+    const htmlPath = "content/pages/index.html";
+    await ensureFile(htmlPath);
     await Deno.writeTextFile(
-        "content/pages/index.html",
+        htmlPath,
         TEMPLATE
             .replace("{{left page}}", tocHTML)
             .replace("{{right page}}", "<h1>Recipe Book</h1>"),
