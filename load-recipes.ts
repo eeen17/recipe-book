@@ -103,7 +103,7 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
                 if (isFileEntry(nextLevel)) {
                     return fileHTML(nextLevel);
                 }
-                else if (name == ".obsidian") return ""
+                else if (name[0] == ".") return ""
                 return dirHTML(
                     name,
                     walkTree(nextLevel),
