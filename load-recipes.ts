@@ -50,12 +50,12 @@ function handleEntry(dirEntry: WalkEntry) {
     }
 }
 
-function getHTMLFilePath(fileEntry: FileEntry, websiteAbsolute = false) {
+function getHTMLFilePath(fileEntry: FileEntry, href = false) {
     const dirsTo = fileEntry.relativeParsePath.dir;
     const fileName = `${toKebabCase(fileEntry.relativeParsePath.name)}.html`;
 
     return path.join(
-        (websiteAbsolute ? path.SEPARATOR : "") + HTML_DIR,
+        (href ? path.SEPARATOR : HTML_DIR),
         dirsTo,
         fileName,
     );
@@ -103,7 +103,7 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
                 if (isFileEntry(nextLevel)) {
                     return fileHTML(nextLevel);
                 }
-                else if (name[0] == ".") return ""
+                else if (name == ".obsidian") return ""
                 return dirHTML(
                     name,
                     walkTree(nextLevel),
