@@ -1,2 +1,5 @@
-content/
+content/pages/*
+content/recipe-content/
+content/toc.html
+!content/pages/styles.css
 index.html
