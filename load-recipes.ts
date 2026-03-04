@@ -137,7 +137,10 @@ async function processMDFile(
     await ensureFile(htmlPath); // create file
     const md = await marked.parse(await Deno.readTextFile(fileEntry.path));
     const html = TEMPLATE
-        .replace("{{right page}}", md)
+        .replace("{{right page}}", 
+            `<div class="content">
+                ${md}
+            </div>`)
         .replace("{{left page}}", tocHTML);
     await Deno.writeTextFile(htmlPath, html);
 }

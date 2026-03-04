@@ -6,6 +6,7 @@ body {
 	height: 100vh;
 	background-color: antiquewhite;
 	display: flex;
+	font-family: "Lora", serif;
 }
 
 div {
@@ -23,7 +24,7 @@ div {
 	padding: 20px 20px 20px 20px;
 }
 
-.table-of-contents {
+.content {
 	width: 100%;
 	height: 100%;
 	padding: 20px 20px 20px 20px;
@@ -44,11 +45,15 @@ summary {
 	font-size: x-large
 }
 
+h1, h2, h3, h4, h5, h6 {
+	font-family: "Gloock", serif;
+}
+
 .table-of-contents > details > summary {
 	font-size: xx-large
 }
 
 
-li {
+.table-of-contents > details > li {
 	list-style: none;
 }
