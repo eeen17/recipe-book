@@ -1,5 +1,7 @@
-content/pages/*
+content/recipe-book/*
 content/recipe-content/
+content/.vscode
 content/toc.html
-!content/pages/styles.css
+!content/recipe-book/styles.css
 index.html
+.secrets

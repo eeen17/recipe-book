@@ -6,7 +6,7 @@ import { type WalkEntry } from "jsr:@std/fs";
 import { toKebabCase } from "jsr:@std/text/to-kebab-case";
 
 const TEMPLATE = await Deno.readTextFile("template.html");
-const HTML_DIR = "content/pages";
+const HTML_DIR = "content/recipe-book";
 const MD_DIR = "content/recipe-content";
 
 type FileEntry = {
@@ -55,7 +55,7 @@ function getHTMLFilePath(fileEntry: FileEntry, href = false) {
     const fileName = `${toKebabCase(fileEntry.relativeParsePath.name)}.html`;
 
     return path.join(
-        (href ? path.SEPARATOR : HTML_DIR),
+        (href ? path.join(path.SEPARATOR, "recipe-book") : HTML_DIR),
         dirsTo,
         fileName,
     );
@@ -118,7 +118,7 @@ async function writeHTML(): Promise<[FileEntry[], string]> {
         ${walkTree(tocTree, true)}
     </div>`;
 
-    const htmlPath = "content/pages/index.html";
+    const htmlPath = path.join(HTML_DIR, "index.html");
     await ensureFile(htmlPath);
     await Deno.writeTextFile(
         htmlPath,
